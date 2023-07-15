@@ -23,22 +23,23 @@ def parse_heading(line):
     return '<h{}>{}</h{}>\n'.format(level, line.strip('# ').strip(), level)
 
 
-def parse_unordered_list(lines):
+def parse_list(lines, list_type):
     """
-    Parses the unordered list lines and generates HTML.
+    Parses the list lines and generates HTML.
 
     Arguments:
               lines (list): The list of lines in Markdown format.
+              list_type (str): The type of the list: 'unordered' or 'ordered'.
 
     Returns:
-            str: The corresponding HTML for the unordered list.
+            str: The corresponding HTML for the list.
     """
-    html = '<ul>\n'
+    html = '<{}l>\n'.format('u' if list_type == 'unordered' else 'o')
     for line in lines:
         line = line.strip()
-        if line.startswith('- '):
+        if line.startswith('- ') or line.startswith('* '):
             html += '    <li>{}</li>\n'.format(line[2:])
-    html += '</ul>\n'
+    html += '</{}l>\n'.format('u' if list_type == 'unordered' else 'o')
     return html
 
 
@@ -63,20 +64,27 @@ def markdown_to_html(md, html):
 
         # Group consecutive list lines
         list_lines = []
+        list_type = None
+
         for line in markdown_content:
-            if line.strip().startswith('- '):
+            line = line.strip()
+            if line.startswith('- ') or line.startswith('* '):
+                if not list_type:
+                    list_type = 'unordered' if line.startswith('- ') else 'ordered'
                 list_lines.append(line)
             elif list_lines:
-                html_content += parse_unordered_list(list_lines)
+                html_content += parse_list(list_lines, list_type)
                 list_lines = []
+                list_type = None
             elif line.startswith('#'):
                 html_content += parse_heading(line)
             else:
                 html_content += markdown.markdown(line)
 
+
         # Handle remaining list lines if any
         if list_lines:
-            html_content += parse_unordered_list(list_lines)
+            html_content += parse_list(list_lines, list_type)
 
     # Write the HTML content to the output file
     with open(html, 'w') as html_file:
