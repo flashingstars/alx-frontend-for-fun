@@ -17,12 +17,29 @@ def parse_heading(line):
     Returns:
             str: The corresponding HTML for the heading.
     """
-
-
     level = line.count('#')
     if level > 6:
         level = 6
     return '<h{}>{}</h{}>\n'.format(level, line.strip('# ').strip(), level)
+
+
+def parse_unordered_list(lines):
+    """
+    Parses the unordered list lines and generates HTML.
+
+    Arguments:
+              lines (list): The list of lines in Markdown format.
+
+    Returns:
+            str: The corresponding HTML for the unordered list.
+    """
+    html = '<ul>\n'
+    for line in lines:
+        line = line.strip()
+        if line.startswith('- '):
+            html += '    <li>{}</li>\n'.format(line[2:])
+    html += '</ul>\n'
+    return html
 
 
 def markdown_to_html(md, html):
@@ -44,11 +61,22 @@ def markdown_to_html(md, html):
         markdown_content = md_file.readlines()
         html_content = ''
 
+        # Group consecutive list lines
+        list_lines = []
         for line in markdown_content:
-            if line.startswith('# '):
+            if line.strip().startswith('- '):
+                list_lines.append(line)
+            elif list_lines:
+                html_content += parse_unordered_list(list_lines)
+                list_lines = []
+            elif line.startswith('#'):
                 html_content += parse_heading(line)
             else:
                 html_content += markdown.markdown(line)
+
+        # Handle remaining list lines if any
+        if list_lines:
+            html_content += parse_unordered_list(list_lines)
 
     # Write the HTML content to the output file
     with open(html, 'w') as html_file:
