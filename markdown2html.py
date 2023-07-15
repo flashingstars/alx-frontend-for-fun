@@ -7,6 +7,24 @@ import os
 import markdown
 
 
+def parse_heading(line):
+    """
+    Parses the heading line and generates HTML.
+
+    Arguments:
+              line (str): The heading line in Markdown format.
+
+    Returns:
+            str: The corresponding HTML for the heading.
+    """
+
+
+    level = line.count('#')
+    if level > 6:
+        level = 6
+    return '<h{}>{}</h{}>\n'.format(level, line.strip('# ').strip(), level)
+
+
 def markdown_to_html(md, html):
     """
     Converting a markdown to HTML.
@@ -23,8 +41,14 @@ def markdown_to_html(md, html):
 
     # Converting the Markdown file to HTML
     with open(md, 'r') as md_file:
-        markdown_content = md_file.read()
-        html_content = markdown.markdown(markdown_content)
+        markdown_content = md_file.readlines()
+        html_content = ''
+
+        for line in markdown_content:
+            if line.startswith('# '):
+                html_content += parse_heading(line)
+            else:
+                html_content += markdown.markdown(line)
 
     # Write the HTML content to the output file
     with open(html, 'w') as html_file:
